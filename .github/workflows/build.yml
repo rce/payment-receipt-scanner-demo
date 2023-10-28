@@ -1,0 +1,51 @@
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: ./scripts/build-backend.sh
+      - uses: actions/upload-artifact@v3
+        with:
+          name: lambda-jar
+          path: server/target/scala-3.3.1/server-assembly-0.1.0-SNAPSHOT.jar
+          if-no-files-found: error
+
+  build-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: ./scripts/build-frontend.sh
+      - uses: actions/upload-artifact@v3
+        with:
+          name: frontend-dist
+          path: web/dist
+          if-no-files-found: error
+
+  deploy:
+    needs: [build-backend, build-frontend]
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+        with:
+          name: lambda-jar
+      #- uses: actions/download-artifact@v3
+      #  with:
+      #    name: frontend-dist
+      #    path: frontend-dist
+      - run: ls
+      - uses: aws-actions/configure-aws-credentials@master
+        with:
+          role-to-assume: arn:aws:iam::944977746868:role/GithubActionsAccessRole
+          aws-region: eu-west-1
+      - run: ./scripts/deploy.sh

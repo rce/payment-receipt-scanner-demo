@@ -1,0 +1,9 @@
+html, body, #root, .dropzone {
+    height: 100%;
+    width: 100%;
+    text-align: center;
+}
+
+pre {
+    text-align: left;
+}

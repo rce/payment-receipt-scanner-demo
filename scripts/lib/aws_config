@@ -1,0 +1,3 @@
+[profile payment-receipt-scanner-demo]
+source_profile = rce-organization
+role_arn = arn:aws:iam::944977746868:role/OrganizationAccountAccessRole
