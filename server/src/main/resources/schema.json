@@ -1,0 +1,81 @@
+[
+  {
+    "name": "store_transaction",
+    "description": "Stores a transaction in the database",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "transactionDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Date in ISO YYYY-MM-DD format"
+        },
+        "payee": {
+          "type": "string"
+        },
+        "totalSum": {
+          "type": "number"
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency code. EUR by default"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "amount": {
+                "type": "number"
+              },
+              "category": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "label",
+              "amount"
+            ]
+          }
+        },
+        "vat": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "base": {
+                "type": "string"
+              },
+              "gross": {
+                "type": "number"
+              },
+              "net": {
+                "type": "number"
+              },
+              "tax": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "base",
+              "gross",
+              "net",
+              "tax"
+            ]
+          }
+        }
+      },
+      "required": [
+        "transactionDate",
+        "payee",
+        "items",
+        "vat",
+        "totalSum",
+        "currency"
+      ]
+    }
+  }
+]

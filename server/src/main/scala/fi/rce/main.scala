@@ -13,27 +13,9 @@ import software.amazon.awssdk.services.textract.model.*
 import scala.jdk.CollectionConverters.*
 
 val prompt =
-  raw"""You are given raw text extracted from a photo of a payment receipt.
-
-I'd like you to generate a JSON object describing the transaction of the following form:
-${
-    Json.mkString(Transaction(
-      transactionDate = "1970-01-01",
-      payee = "R-Kioski Oy",
-      items = Seq(
-        Item(label = "Pieni kahvi", amount = 2.00, category = "Cafeteria"),
-        Item(label = "Kana taquito 3 KPL", amount = 3.90, category = "Snacks")
-      ),
-      vat = Seq(
-        Vat(base = "14%", gross = 2, net = 1.75, tax = 0.25),
-        Vat(base = "24%", gross = 3.9, net = 3.15, tax = 0.75)
-      ),
-      totalSum = 5.90,
-      currency = "EUR"
-    ))
-  }
-
-You should be able to find items whose sum is the total sum.
+  raw"""The user wants to track their spending and add a transaction based on purchase receipt or invoice.
+You are given raw text extracted from a photo of a payment receipt or invoice.
+You should be able to find items whose sum is the total sum and not less or greater than the total sum.
 There can be one or more items in the receipt.
 The VAT information is optional. Use empty list if there is no VAT information.
 Feel free to correct typos in item labels.
@@ -66,9 +48,7 @@ object ReceiptReader {
       Log.info("No lines detected in image")
       throw RuntimeException("No lines detected in image")
     } else {
-      val response = Log.time("Prompt with OpenAI") {
-        ai.prompt(prompt, lines.mkString("\n"))
-      }
+      val response = parseToJson(lines)
       Log.info(s"Response: $response")
       try {
         Json.parse[Transaction](response)
@@ -78,6 +58,20 @@ object ReceiptReader {
           throw e
       }
     }
+  }
+
+  private def parseToJson(lines: Seq[String]): String = Log.time("Prompt with OpenAI") {
+    val input = lines.mkString("\n")
+
+    val schema = Json.parseRaw(getClass.getResourceAsStream("/schema.json"))
+    val result = ai.chatCompletions(ChatCompletionRequest(
+      model = "gpt-3.5-turbo",
+      messages = Seq(Message("system", Some(prompt)), Message("user", Some(input))),
+      function_call = Some(Json.parseRaw("""{"name":"store_transaction"}""")),
+      functions = Some(schema),
+    ))
+
+    result.choices.head.message.function_call.get.arguments
   }
 
   def detectLines(blob: Array[Byte]): Seq[String] = {
@@ -167,7 +161,7 @@ case class Transaction(
   currency: String
 )
 
-case class Item(label: String, amount: Double, category: String)
+case class Item(label: String, amount: Double, category: Option[String])
 
 case class Vat(base: String, gross: Double, net: Double, tax: Double)
 

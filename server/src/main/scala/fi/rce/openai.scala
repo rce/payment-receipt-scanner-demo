@@ -1,5 +1,7 @@
 package fi.rce
 
+import com.fasterxml.jackson.databind.JsonNode
+
 class OpenAIClient(
   val apiKey: String,
   val organization: Option[String] = None
@@ -12,9 +14,9 @@ class OpenAIClient(
   def prompt(system: String, input: String): String = {
     val result = chatCompletions(ChatCompletionRequest(
       model = "gpt-3.5-turbo",
-      messages = Seq(Message("system", system), Message("user", input)),
+      messages = Seq(Message("system", Some(system)), Message("user", Some(input))),
     ))
-    result.choices.head.message.content
+    result.choices.head.message.content.get
   }
 
   def chatCompletions(req: ChatCompletionRequest): ChatCompletionResponse =
@@ -26,6 +28,8 @@ case class ChatCompletionRequest(
   model: String,
   messages: Seq[Message],
   temperature: Option[Double] = None,
+  function_call: Option[JsonNode] = None,
+  functions: Option[JsonNode] = None,
 )
 
 case class ChatCompletionResponse(
@@ -41,4 +45,13 @@ case class Usage(prompt_tokens: Int, completion_tokens: Int, total_tokens: Int)
 
 case class Choice(message: Message, finish_reason: String, index: Int)
 
-case class Message(role: String, content: String)
+case class Message(
+  role: String,
+  content: Option[String] = None,
+  function_call: Option[FunctionCall] = None,
+)
+
+case class FunctionCall(
+  name: String,
+  arguments: String,
+)
