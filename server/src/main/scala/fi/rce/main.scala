@@ -101,19 +101,21 @@ object ReceiptReader {
 
   def detectLinesAsync(blob: Array[Byte]): Seq[String] = {
     val uuid = java.util.UUID.randomUUID().toString
+    val bucketName = getenv("BUCKET_NAME").get
+    val objectKey = s"receipts/$uuid"
 
     Log.time("putObject") {
       s3Client.putObject(PutObjectRequest.builder()
-        .bucket(getenv("BUCKET_NAME").get)
-        .key(s"receipts/$uuid")
+        .bucket(bucketName)
+        .key(objectKey)
         .build(), RequestBody.fromBytes(blob))
     }
 
     val jobId = Log.time("Start text detection") {
       val docLoc = DocumentLocation.builder()
         .s3Object(S3Object.builder()
-          .bucket(getenv("BUCKET_NAME").get)
-          .name(s"receipts/$uuid")
+          .bucket(bucketName)
+          .name(objectKey)
           .build())
         .build()
       val request: StartDocumentTextDetectionRequest = StartDocumentTextDetectionRequest.builder()
