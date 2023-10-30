@@ -81,25 +81,26 @@ object ReceiptReader {
   }
 
   def detectLines(blob: Array[Byte]): Seq[String] = {
-    val async = true
-    if (async) {
-      Log.time("detectLinesAsync") {
+    try {
+      detectLinesSync(blob)
+    } catch {
+      case e: Exception =>
+        Log.info(s"Failed to detect lines synchronously: $e")
         detectLinesAsync(blob)
-      }
-    } else {
-      Log.time("detectLinesSync") {
-        val bytes = SdkBytes.fromByteArray(blob)
-        val doc = Document.builder().bytes(bytes).build()
-        val request = DetectDocumentTextRequest.builder().document(doc).build()
-        val response = textractClient.detectDocumentText(request).blocks()
-        val blocks = response.asScala
-        val lines = blocks.filter(_.blockTypeAsString() == "LINE").map(_.text())
-        lines.toSeq
-      }
     }
   }
 
-  def detectLinesAsync(blob: Array[Byte]): Seq[String] = {
+  private def detectLinesSync(blob: Array[Byte]) = Log.time("detectLinesSync") {
+    val bytes = SdkBytes.fromByteArray(blob)
+    val doc = Document.builder().bytes(bytes).build()
+    val request = DetectDocumentTextRequest.builder().document(doc).build()
+    val response = textractClient.detectDocumentText(request).blocks()
+    val blocks = response.asScala
+    val lines = blocks.filter(_.blockTypeAsString() == "LINE").map(_.text())
+    lines.toSeq
+  }
+
+  def detectLinesAsync(blob: Array[Byte]): Seq[String] = Log.time("detectLinesAsync") {
     val uuid = java.util.UUID.randomUUID().toString
     val bucketName = getenv("BUCKET_NAME").get
     val objectKey = s"receipts/$uuid"
