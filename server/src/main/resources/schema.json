@@ -13,14 +13,14 @@
         "payee": {
           "type": "string"
         },
-        "totalSum": {
+        "priceTotal": {
           "type": "number"
         },
         "currency": {
           "type": "string",
           "description": "Currency code. EUR by default"
         },
-        "items": {
+        "lineItems": {
           "type": "array",
           "items": {
             "type": "object",
@@ -28,7 +28,7 @@
               "label": {
                 "type": "string"
               },
-              "amount": {
+              "price": {
                 "type": "number"
               },
               "category": {
@@ -37,7 +37,7 @@
             },
             "required": [
               "label",
-              "amount"
+              "price"
             ]
           }
         },
@@ -71,9 +71,9 @@
       "required": [
         "transactionDate",
         "payee",
-        "items",
+        "lineItems",
         "vat",
-        "totalSum",
+        "priceTotal",
         "currency"
       ]
     }

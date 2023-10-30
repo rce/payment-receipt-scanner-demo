@@ -155,13 +155,13 @@ object ReceiptReader {
 case class Transaction(
   transactionDate: String,
   payee: String,
-  items: Seq[Item],
+  lineItems: Seq[Item],
   vat: Seq[Vat],
-  totalSum: Double,
+  priceTotal: Double,
   currency: String
 )
 
-case class Item(label: String, amount: Double, category: Option[String])
+case class Item(label: String, price: Double, category: Option[String])
 
 case class Vat(base: String, gross: Double, net: Double, tax: Double)
 
