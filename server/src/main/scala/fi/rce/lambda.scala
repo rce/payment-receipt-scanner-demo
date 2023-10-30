@@ -16,7 +16,7 @@ case class Output(transaction: Transaction)
 class Lambda extends RequestHandler[APIGatewayV2HTTPEvent, APIGatewayV2HTTPResponse] {
   val decoder = java.util.Base64.getDecoder
 
-  def parseImageFromRequestBodyForm(body: Array[Byte], contentType: String): Array[Byte] = {
+  def parseImageFromRequestBodyForm(body: Array[Byte], contentType: String): Array[Byte] = Log.time("parseImageFromBody") {
     val factory = new DiskFileItemFactory()
     val fileUpload = new FileUpload()
     val iterator = fileUpload.getItemIterator(new RequestContext {
@@ -39,7 +39,7 @@ class Lambda extends RequestHandler[APIGatewayV2HTTPEvent, APIGatewayV2HTTPRespo
     throw new RuntimeException("No image field")
   }
 
-  override def handleRequest(event: APIGatewayV2HTTPEvent, context: Context): APIGatewayV2HTTPResponse = {
+  override def handleRequest(event: APIGatewayV2HTTPEvent, context: Context): APIGatewayV2HTTPResponse = Log.time("handleRequest") {
     val logger = context.getLogger()
     logger.log("Starting")
     try {
@@ -51,7 +51,7 @@ class Lambda extends RequestHandler[APIGatewayV2HTTPEvent, APIGatewayV2HTTPRespo
         throw RuntimeException("Not base64 encoded")
       }
 
-      val blob = Log.time("parseImageFromBody")(parseImageFromRequestBodyForm(body, event.getHeaders.get("content-type")))
+      val blob = parseImageFromRequestBodyForm(body, event.getHeaders.get("content-type"))
       val tx = ReceiptReader.read(blob)
       val result = APIGatewayV2HTTPResponse.builder()
         .withStatusCode(200)
